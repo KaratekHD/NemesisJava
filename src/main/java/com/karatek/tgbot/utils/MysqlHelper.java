@@ -31,4 +31,17 @@ public class MysqlHelper {
             return false;
         }
     }
+
+    public static boolean checkGroupMemberByID(long ID, String dbname) throws SQLException {
+        String queryCheck = "SELECT * from " + dbname + " WHERE id = " + ID;
+        Statement st = TGBot.connection.createStatement();
+        ResultSet rs = st.executeQuery(queryCheck); // execute the query, and get a java resultset
+
+        // if this ID already exists, we quit
+        if(rs.absolute(1)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }

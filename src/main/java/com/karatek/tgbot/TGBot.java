@@ -62,7 +62,7 @@ public class TGBot extends TelegramLongPollingBot {
 
         try {
             DatabaseMetaData dbm = connection.getMetaData();
-            ResultSet tables = dbm.getTables(null, null, "employee", null);
+            ResultSet tables = dbm.getTables(null, null, "CHATS", null);
             if (tables.next()) {
             }
             else {

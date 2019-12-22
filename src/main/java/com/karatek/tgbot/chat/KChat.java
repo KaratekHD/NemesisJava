@@ -68,17 +68,86 @@ public class KChat {
 
         String msg = update.getMessage().getText();
         if (update.hasMessage() && update.getMessage().hasText()) {
-            if(msg.startsWith("/")) {
-                System.out.println("[LOG " + DateHelper.getCurrentTimeStamp() + "] " + update.getMessage().getFrom().getUserName() + " executed command: " + update.getMessage().getText());
-            } else {
-                System.out.println("[LOG " + DateHelper.getCurrentTimeStamp() + "] " + update.getMessage().getFrom().getUserName() + " sent message: " + update.getMessage().getText());
-            }
+
             if(update.getMessage().getChat().isGroupChat() || update.getMessage().getChat().isSuperGroupChat()) {
                 try {
                     ProcessBlacklist.process(update, name);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
+            }
+
+            try {
+                if(update.getMessage().getChat().isGroupChat() || update.getMessage().getChat().isSuperGroupChat()) {
+                    DatabaseMetaData dbm = TGBot.connection.getMetaData();
+                    String dbname = "GROUP_" + update.getMessage().getChatId().toString().replace("-", "") + "_MEMBERS";
+                    ResultSet tables = dbm.getTables(null, null, dbname, null);
+                    if (tables.next()) {
+                    }
+                    else {
+                        Statement stmt = TGBot.connection.createStatement();
+                        String sql = "CREATE TABLE " + dbname + " " +
+                                "(id BIGINT, " +
+                                " firstName VARCHAR(255), " +
+                                " lastName VARCHAR(255), " +
+                                " userName VARCHAR(255), " +
+                                " isBot BOOLEAN, " +
+                                " PRIMARY KEY ( id ))";
+                        stmt.executeUpdate(sql);
+                    }
+
+                    if(!MysqlHelper.checkGroupMemberByID(update.getMessage().getFrom().getId(), dbname)) {
+                        String query = " insert into " + dbname + " (id, firstName, lastName, userName, isBot)" + " values (?, ?, ?, ?, ?)";
+                        PreparedStatement preparedStmt = TGBot.connection.prepareStatement(query);
+                        preparedStmt.setLong(1, update.getMessage().getFrom().getId());
+                        preparedStmt.setString(2, update.getMessage().getFrom().getFirstName());
+                        preparedStmt.setString(3, update.getMessage().getFrom().getLastName());
+                        preparedStmt.setString(4, update.getMessage().getFrom().getUserName());
+                        preparedStmt.setBoolean(5, update.getMessage().getFrom().getBot());
+                        preparedStmt.execute();
+                        System.out.println("[LOG " + DateHelper.getCurrentTimeStamp() + "] Added entry to database.");
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+            String displayname = "";
+            if(update.getMessage().getChat().isGroupChat() || update.getMessage().getChat().isSuperGroupChat()) {
+                displayname = update.getMessage().getFrom().getUserName();
+                String dbname = "GROUP_" + update.getMessage().getChatId().toString().replace("-", "") + "_MEMBERS";
+                try {
+                    String queryCheck = "SELECT * from " + dbname + " WHERE id = '" + update.getMessage().getFrom().getId() + "'";
+                    Statement st = TGBot.connection.createStatement();
+                    ResultSet rs = st.executeQuery(queryCheck);
+                    if(rs.next()) {
+                        displayname = rs.getString(2).replace("null", "") + " " + rs.getString(3).replace("null", "");
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
+            } else {
+
+
+                try {
+                    String queryCheck = "SELECT * from CHATS WHERE id = '" + update.getMessage().getFrom().getId() + "'";
+                    Statement st = TGBot.connection.createStatement();
+                    ResultSet rs = st.executeQuery(queryCheck);
+                    if(rs.next()) {
+                        displayname = rs.getString(2).replace("null", "");
+                    }
+
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
+
+            }
+            if(msg.startsWith("/")) {
+                System.out.println("[LOG " + DateHelper.getCurrentTimeStamp() + "] " + displayname + " executed command: " + update.getMessage().getText());
+            } else {
+                System.out.println("[LOG " + DateHelper.getCurrentTimeStamp() + "] " + displayname + " sent message: " + update.getMessage().getText());
             }
 
             String[] messages = msg.split(" ");
@@ -91,7 +160,12 @@ public class KChat {
                     break;
                 default:
                     if(messages[0].startsWith("/")) {
-                        MessageHelper.sendMessage(ID, messages[0].replace("/", "") + ": Command not found.");
+                        if(update.getMessage().getChat().isGroupChat() || update.getMessage().getChat().isSuperGroupChat()) {
+
+                        } else {
+                            MessageHelper.sendMessage(ID, messages[0].replace("/", "") + ": Command not found.");
+                        }
+
                     }
                     break;
             }
