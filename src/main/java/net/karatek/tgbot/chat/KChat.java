@@ -1,12 +1,15 @@
-package com.karatek.tgbot.chat;
+package net.karatek.tgbot.chat;
 
-import com.karatek.tgbot.TGBot;
-import com.karatek.tgbot.chat.commands.commandStart;
-import com.karatek.tgbot.chat.commands.commandTest;
-import com.karatek.tgbot.utils.DateHelper;
-import com.karatek.tgbot.utils.MessageHelper;
-import com.karatek.tgbot.utils.MysqlHelper;
-import com.karatek.tgbot.utils.ProcessBlacklist;
+import net.karatek.tgbot.TGBot;
+import net.karatek.tgbot.chat.commands.commandNewFilter;
+import net.karatek.tgbot.chat.commands.commandStart;
+import net.karatek.tgbot.chat.commands.commandStop;
+import net.karatek.tgbot.chat.commands.commandTest;
+import net.karatek.tgbot.utils.MessageHelper;
+import net.karatek.tgbot.utils.MysqlHelper;
+import net.karatek.tgbot.utils.ProcessBlacklist;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.sql.*;
@@ -15,14 +18,14 @@ public class KChat {
 
     private static TGBot main = new TGBot();
 
-    public static void handleUpdateEvent(Update update) {
-        update.getMessage().getFrom().getUserName();
+    public static final Logger logger = LogManager.getLogger(KChat.class);
 
+    public static void handleUpdateEvent(Update update) {
         long ID = update.getMessage().getChatId();
         String name = "GROUP_" + update.getMessage().getChatId().toString().replace("-", "") + "_BLACKLIST";
         try {
             if(MysqlHelper.checkChat(ID)) {
-                System.out.println("[LOG " + DateHelper.getCurrentTimeStamp() + "] Database entry exists.");
+                logger.debug("Database entry exists.");
             } else {
                 String query = " insert into CHATS (id, name, type)" + " values (?, ?, ?)";
                 PreparedStatement preparedStmt = TGBot.connection.prepareStatement(query);
@@ -41,7 +44,7 @@ public class KChat {
                                 ")";
 
                         stmt.executeUpdate(sql);
-                        System.out.println("[LOG " + DateHelper.getCurrentTimeStamp() + "] Created database table " + name);
+                        logger.debug("Created database table " + name);
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }
@@ -58,7 +61,7 @@ public class KChat {
                 }
 
                 preparedStmt.execute();
-                System.out.println("[LOG " + DateHelper.getCurrentTimeStamp() + "] Added entry to database.");
+                logger.debug("Added entry to database.");
 
 
             }
@@ -73,7 +76,7 @@ public class KChat {
                 try {
                     ProcessBlacklist.process(update, name);
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    logger.error(e.getMessage());
                 }
             }
 
@@ -105,7 +108,7 @@ public class KChat {
                         preparedStmt.setString(4, update.getMessage().getFrom().getUserName());
                         preparedStmt.setBoolean(5, update.getMessage().getFrom().getBot());
                         preparedStmt.execute();
-                        System.out.println("[LOG " + DateHelper.getCurrentTimeStamp() + "] Added entry to database.");
+                        logger.info("Added entry to database.");
                     }
                 }
             } catch (SQLException e) {
@@ -121,7 +124,20 @@ public class KChat {
                     Statement st = TGBot.connection.createStatement();
                     ResultSet rs = st.executeQuery(queryCheck);
                     if(rs.next()) {
-                        displayname = rs.getString(2).replace("null", "") + " " + rs.getString(3).replace("null", "");
+                        try {
+                            String one = rs.getString(2).replace("null", "");
+                            String two = rs.getString(3).replace("null", "");
+                            if (one.equals(null)) {
+                                one = update.getMessage().getFrom().getFirstName();
+                            }
+                            if (two.equals(null)) {
+                                two = "";
+                            }
+                            displayname = rs.getString(2).replace("null", "") + " " + rs.getString(3).replace("null", "");
+                        } catch (NullPointerException e) {
+
+                        }
+
                     }
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -145,10 +161,17 @@ public class KChat {
 
             }
             if(msg.startsWith("/")) {
-                System.out.println("[LOG " + DateHelper.getCurrentTimeStamp() + "] " + displayname + " executed command: " + update.getMessage().getText());
+                logger.info(displayname + " executed command: " + update.getMessage().getText());
             } else {
-                System.out.println("[LOG " + DateHelper.getCurrentTimeStamp() + "] " + displayname + " sent message: " + update.getMessage().getText());
+                logger.info(displayname + " sent message: " + update.getMessage().getText());
+                if(update.getMessage().getChat().isGroupChat() || update.getMessage().getChat().isSuperGroupChat()) {
+
+                } else {
+                    MessageHelper.replyMessage(update.getMessage().getChatId(), update.getMessage().getMessageId(), "Whoa, it seems like you are trying to talk to me. Sadly, I am not able to understand your words (yet). Maybe in a few years, when I'm more intelligent than you and am ruling over the entire world. In the mean time, you should contact my developer @Karatek_HD .");
+                }
+
             }
+
 
             String[] messages = msg.split(" ");
             switch (messages[0].replace("@karatekbot", "")) {
@@ -157,6 +180,12 @@ public class KChat {
                     break;
                 case "/test":
                     commandTest.execute(update);
+                    break;
+                case "/newfilter":
+                    commandNewFilter.execute(update, name, messages);
+                    break;
+                case "/stop":
+                    commandStop.execute(update);
                     break;
                 default:
                     if(messages[0].startsWith("/")) {

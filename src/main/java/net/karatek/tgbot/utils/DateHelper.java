@@ -1,4 +1,4 @@
-package com.karatek.tgbot.utils;
+package net.karatek.tgbot.utils;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

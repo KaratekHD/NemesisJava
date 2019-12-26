@@ -1,6 +1,6 @@
-package com.karatek.tgbot.utils;
+package net.karatek.tgbot.utils;
 
-import com.karatek.tgbot.TGBot;
+import net.karatek.tgbot.TGBot;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

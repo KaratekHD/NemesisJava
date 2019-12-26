@@ -1,3 +1,3 @@
 # Project exclude paths
 /target/
-/src/main/java/com/karatek/tgbot/Token.java
+/src/main/java/net/karatek/tgbot/Token.java

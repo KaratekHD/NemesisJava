@@ -1,6 +1,8 @@
-package com.karatek.tgbot;
+package net.karatek.tgbot;
 
-import com.karatek.tgbot.chat.KChat;
+import net.karatek.tgbot.chat.KChat;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
@@ -12,6 +14,7 @@ import java.util.ArrayList;
 
 public class TGBot extends TelegramLongPollingBot {
 
+    public static ArrayList<String> admins = new ArrayList<>();
     public static final String VERSION = "0.1 Alpha";
 
     private static String host = "localhost";
@@ -22,7 +25,7 @@ public class TGBot extends TelegramLongPollingBot {
 
     public static Connection connection;
 
-    public static ArrayList<String> admins = new ArrayList<String>();
+    public static final Logger logger = LogManager.getLogger(TGBot.class);
 
     public void onUpdateReceived(Update update) {
         KChat.handleUpdateEvent(update);
@@ -37,14 +40,14 @@ public class TGBot extends TelegramLongPollingBot {
     }
 
     public static void main(String[] args) {
-        admins.add("Karatek_HD");
-        admins.add("GesamteVonNyx");
         ApiContextInitializer.init();
 
+        admins.add("540549815");
+
         try {
-            System.out.println("Connecting to database...");
+            logger.info("Connecting to database...");
             connection = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + database, user, password);
-            System.out.println("Done!");
+            logger.info("Done!");
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -53,8 +56,9 @@ public class TGBot extends TelegramLongPollingBot {
         try {
             botsApi.registerBot(new TGBot());
         } catch (TelegramApiException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
+
 
 
 

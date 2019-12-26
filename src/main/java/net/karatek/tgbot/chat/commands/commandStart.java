@@ -1,6 +1,6 @@
-package com.karatek.tgbot.chat.commands;
+package net.karatek.tgbot.chat.commands;
 
-import com.karatek.tgbot.utils.MessageHelper;
+import net.karatek.tgbot.utils.MessageHelper;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 public class commandStart {

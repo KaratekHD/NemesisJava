@@ -1,6 +1,6 @@
-package com.karatek.tgbot.utils;
+package net.karatek.tgbot.utils;
 
-import com.karatek.tgbot.TGBot;
+import net.karatek.tgbot.TGBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 

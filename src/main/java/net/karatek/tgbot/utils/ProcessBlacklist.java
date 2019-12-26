@@ -1,6 +1,6 @@
-package com.karatek.tgbot.utils;
+package net.karatek.tgbot.utils;
 
-import com.karatek.tgbot.TGBot;
+import net.karatek.tgbot.TGBot;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.sql.PreparedStatement;
@@ -22,7 +22,7 @@ public class ProcessBlacklist {
             Boolean delete = results.getBoolean("delete");
             Boolean answer = results.getBoolean("answer");
             String string = results.getString("string");
-            System.out.println(name + delete + answer + string);
+            TGBot.logger.debug(name + delete + answer + string);
         }
     }
 }
