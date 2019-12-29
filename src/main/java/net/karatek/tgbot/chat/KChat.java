@@ -10,7 +10,12 @@ import net.karatek.tgbot.utils.MysqlHelper;
 import net.karatek.tgbot.utils.ProcessBlacklist;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatAdministrators;
+import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatMember;
+import org.telegram.telegrambots.meta.api.objects.ChatMember;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 
 import java.sql.*;
 
@@ -18,10 +23,16 @@ public class KChat {
 
     private static TGBot main = new TGBot();
 
-    public static final Logger logger = LogManager.getLogger(KChat.class);
+    public static final Logger logger = TGBot.logger;
 
-    public static void handleUpdateEvent(Update update) {
-        long ID = update.getMessage().getChatId();
+    public static void handleUpdateEvent(Update update) throws NullPointerException{
+        long ID = 0;
+        try {
+            ID = update.getMessage().getChat().getId();
+        } catch (NullPointerException e) {
+            logger.warn("NullPointerException: " + e.getMessage());
+        }
+
         String name = "GROUP_" + update.getMessage().getChatId().toString().replace("-", "") + "_BLACKLIST";
         try {
             if(MysqlHelper.checkChat(ID)) {
@@ -53,7 +64,6 @@ public class KChat {
                     preparedStmt.setString(2, update.getMessage().getChat().getTitle());
 
 
-
                 } else {
                     preparedStmt.setLong(1, ID);
                     preparedStmt.setString(3, "USER");
@@ -78,7 +88,20 @@ public class KChat {
                 } catch (SQLException e) {
                     logger.error(e.getMessage());
                 }
+
             }
+
+            GetChatMember getChatMember = new GetChatMember();
+            getChatMember.setChatId(update.getMessage().getChatId());
+            getChatMember.setUserId(update.getMessage().getFrom().getId());
+            ChatMember chatMember = null;
+            try {
+                chatMember = new TGBot().execute(getChatMember);
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
+            logger.debug(chatMember.getStatus());
+
 
             try {
                 if(update.getMessage().getChat().isGroupChat() || update.getMessage().getChat().isSuperGroupChat()) {
@@ -174,7 +197,7 @@ public class KChat {
 
 
             String[] messages = msg.split(" ");
-            switch (messages[0].replace("@karatekbot", "")) {
+            switch (messages[0].replace("@karatekbot", "").toLowerCase()) {
                 case "/start":
                     commandStart.execute(update);
                     break;

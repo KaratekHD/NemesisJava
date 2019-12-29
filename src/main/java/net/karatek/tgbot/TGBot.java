@@ -28,7 +28,14 @@ public class TGBot extends TelegramLongPollingBot {
     public static final Logger logger = LogManager.getLogger(TGBot.class);
 
     public void onUpdateReceived(Update update) {
-        KChat.handleUpdateEvent(update);
+        new Thread(() -> {
+            try {
+                KChat.handleUpdateEvent(update);
+            } catch (NullPointerException e) {
+                logger.warn("NullPointerException: " + e.getMessage());
+            }
+
+        }).start();
     }
 
     public String getBotUsername() {
@@ -58,11 +65,6 @@ public class TGBot extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             logger.error(e.getMessage());
         }
-
-
-
-
-
 
         try {
             DatabaseMetaData dbm = connection.getMetaData();

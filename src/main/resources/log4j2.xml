@@ -9,7 +9,7 @@
         </Console>
     </Appenders>
     <Loggers>
-        <Logger name="com.karatek" level="debug" />
+        <Logger name="net.karatek" level="debug" />
         <Root level="info">
             <AppenderRef ref="STDOUT" />
         </Root>
