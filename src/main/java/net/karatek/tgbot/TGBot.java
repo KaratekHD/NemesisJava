@@ -49,7 +49,8 @@ public class TGBot extends TelegramLongPollingBot {
     public static void main(String[] args) {
         ApiContextInitializer.init();
 
-        admins.add("540549815");
+        admins.add("540549815"); // Karatek_HD
+        admins.add("857177538"); // Nyx
 
         try {
             logger.info("Connecting to database...");
